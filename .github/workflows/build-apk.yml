@@ -19,16 +19,30 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
 
-      - name: Build Debug APK
-        run: gradle assembleDebug
+      - name: Find project root & Build Debug APK
+        run: |
+          PROJECT_DIR=$(find . -name "settings.gradle.kts" -printf "%h\n" | head -n 1)
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Khong tim thay settings.gradle.kts! Kiem tra lai cau truc thu muc:"
+            find . -maxdepth 4
+            exit 1
+          fi
+          echo "Building project in: $PROJECT_DIR"
+          cd "$PROJECT_DIR"
+          gradle assembleDebug
+          mkdir -p "$GITHUB_WORKSPACE/apk_out"
+          cp app/build/outputs/apk/debug/*.apk "$GITHUB_WORKSPACE/apk_out/"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: XiaozhiMusicServer-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: apk_out/*.apk
