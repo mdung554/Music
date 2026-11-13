@@ -24,16 +24,36 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Find project root & Build Debug APK
+      - name: Fix Gradle config & Build Debug APK
         run: |
-          PROJECT_DIR=$(find . -name "settings.gradle.kts" -printf "%h\n" | head -n 1)
+          PROJECT_DIR=$(find . -name "AndroidManifest.xml" -printf "%h\n" | sed 's|/app/src/main||' | head -n 1)
           if [ -z "$PROJECT_DIR" ]; then
-            echo "Khong tim thay settings.gradle.kts! Danh sach file hien co:"
-            find . -maxdepth 4
+            echo "Thieu thu muc app/src/main/AndroidManifest.xml tren repo! Danh sach file hien co:"
+            find . -maxdepth 5
             exit 1
           fi
-          echo "Building project in: $PROJECT_DIR"
+          echo "Found project root: $PROJECT_DIR"
           cd "$PROJECT_DIR"
+
+          cat << 'EOF' > settings.gradle.kts
+          pluginManagement {
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories { google(); mavenCentral(); maven("https://jitpack.io") }
+          }
+          rootProject.name = "XiaozhiMusicServer"
+          include(":app")
+          EOF
+
+          cat << 'EOF' > build.gradle.kts
+          plugins {
+              id("com.android.application") version "8.5.2" apply false
+              id("org.jetbrains.kotlin.android") version "1.9.24" apply false
+          }
+          EOF
+
           gradle assembleDebug
           mkdir -p "$GITHUB_WORKSPACE/apk_out"
           cp app/build/outputs/apk/debug/*.apk "$GITHUB_WORKSPACE/apk_out/"
