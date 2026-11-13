@@ -19,9 +19,6 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -31,7 +28,7 @@ jobs:
         run: |
           PROJECT_DIR=$(find . -name "settings.gradle.kts" -printf "%h\n" | head -n 1)
           if [ -z "$PROJECT_DIR" ]; then
-            echo "Khong tim thay settings.gradle.kts! Kiem tra lai cau truc thu muc:"
+            echo "Khong tim thay settings.gradle.kts! Danh sach file hien co:"
             find . -maxdepth 4
             exit 1
           fi
